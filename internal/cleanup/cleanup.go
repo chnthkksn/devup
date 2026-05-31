@@ -17,7 +17,8 @@ func WithSignals(ctx context.Context, onSignal func()) (context.Context, context
 			onSignal()
 		}
 		cancel()
-		signal.Stop(ch)
+		// Restore default signal handling so a second Ctrl+C force-exits.
+		signal.Reset(os.Interrupt, syscall.SIGTERM)
 	}()
 	return cctx, cancel
 }

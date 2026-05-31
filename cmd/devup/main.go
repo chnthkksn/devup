@@ -108,7 +108,7 @@ func run() int {
 	cmd.Stderr = stderrFilter
 	cmd.Stdin = os.Stdin
 
-	logInfo("SSH session connected")
+	logInfo("Opening SSH session")
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError
 		if errors.Is(err, context.Canceled) {

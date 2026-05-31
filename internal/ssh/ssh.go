@@ -3,7 +3,6 @@ package ssh
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -28,9 +27,13 @@ func BuildArgs(ports []parser.PortMapping, t parser.Target, remoteCmd string, lo
 
 func EnsureRemoteDir(ctx context.Context, t parser.Target) error {
 	cmd := exec.CommandContext(ctx, "ssh", t.Host, "mkdir -p "+shellQuote(t.RemotePath))
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if out, err := cmd.CombinedOutput(); err != nil {
+		if len(out) > 0 {
+			return fmt.Errorf("%w\n%s", err, out)
+		}
+		return err
+	}
+	return nil
 }
 
 func shellQuote(s string) string {
