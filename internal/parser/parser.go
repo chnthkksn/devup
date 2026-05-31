@@ -30,31 +30,62 @@ func (m *MultiFlag) Set(v string) error {
 
 // Flag name constants — used in both RegisterFlags and valueTakingFlags.
 const (
-	flagPort  = "p"
-	flagPortL = "port"
-	flagLocal = "l"
-	flagLocalL = "local"
-	flagCmd   = "cmd"
+	flagPort      = "p"
+	flagPortL     = "port"
+	flagLocal     = "l"
+	flagLocalL    = "local"
+	flagCmd       = "cmd"
+	flagIdentity  = "i"
+	flagIdentityL = "identity"
+	flagSyncMode  = "sync-mode"
+	flagReconnect = "reconnect"
 )
+
+// ValidSyncModes lists the sync modes accepted by mutagen.
+var ValidSyncModes = map[string]struct{}{
+	"two-way-safe":     {},
+	"two-way-resolved": {},
+	"one-way-safe":     {},
+	"one-way-replica":  {},
+}
 
 // valueTakingFlags is the set of flags that consume the next argument as their
 // value. Must stay consistent with RegisterFlags.
 var valueTakingFlags = map[string]struct{}{
-	"-" + flagPort:    {},
-	"--" + flagPortL:  {},
-	"-" + flagLocal:   {},
-	"--" + flagLocalL: {},
-	"--" + flagCmd:    {},
+	"-" + flagPort:       {},
+	"--" + flagPortL:     {},
+	"-" + flagLocal:      {},
+	"--" + flagLocalL:    {},
+	"--" + flagCmd:       {},
+	"-" + flagIdentity:   {},
+	"--" + flagIdentityL: {},
+	"--" + flagSyncMode:  {},
 }
 
-func RegisterFlags(fs *flag.FlagSet) (*string, *string, *MultiFlag) {
-	local := fs.String(flagLocal, "", "Local folder")
-	fs.StringVar(local, flagLocalL, "", "Local folder")
-	cmd := fs.String(flagCmd, "", "Remote startup command")
+// Config holds all parsed flag values from RegisterFlags.
+type Config struct {
+	LocalPath *string
+	RemoteCmd *string
+	Ports     *MultiFlag
+	Identity  *string
+	SyncMode  *string
+	Reconnect *bool
+}
+
+func RegisterFlags(fs *flag.FlagSet) *Config {
+	cfg := &Config{}
+	cfg.LocalPath = fs.String(flagLocal, "", "Local folder")
+	fs.StringVar(cfg.LocalPath, flagLocalL, "", "Local folder")
+	cfg.RemoteCmd = fs.String(flagCmd, "", "Remote startup command")
 	var ports MultiFlag
+	cfg.Ports = &ports
 	fs.Var(&ports, flagPort, "Port mapping")
 	fs.Var(&ports, flagPortL, "Port mapping")
-	return local, cmd, &ports
+	cfg.Identity = fs.String(flagIdentity, "", "SSH identity file")
+	fs.StringVar(cfg.Identity, flagIdentityL, "", "SSH identity file")
+	cfg.SyncMode = fs.String(flagSyncMode, "one-way-safe", "Mutagen sync mode (two-way-safe, two-way-resolved, one-way-safe, one-way-replica)")
+	cfg.Reconnect = fs.Bool(flagReconnect, false, "Auto-reconnect SSH on disconnect")
+	return cfg
 }
 
 func SplitArgs(args []string) ([]string, string, error) {

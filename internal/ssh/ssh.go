@@ -9,8 +9,11 @@ import (
 	"devup/internal/parser"
 )
 
-func BuildArgs(ports []parser.PortMapping, t parser.Target, remoteCmd string, logf func(string, ...any)) []string {
-	args := make([]string, 0, len(ports)*2+4)
+func BuildArgs(ports []parser.PortMapping, t parser.Target, remoteCmd, identity string, logf func(string, ...any)) []string {
+	args := make([]string, 0, len(ports)*2+6)
+	if identity != "" {
+		args = append(args, "-i", identity)
+	}
 	for _, m := range ports {
 		if logf != nil {
 			logf("Port forward: localhost:%d -> remote:%d", m.Local, m.Remote)

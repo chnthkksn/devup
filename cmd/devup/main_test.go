@@ -57,7 +57,7 @@ func TestBuildSSHArgs(t *testing.T) {
 	target := parser.Target{Host: "ubuntu@example.com", RemotePath: "/apps/api"}
 	ports := []parser.PortMapping{{Local: 3000, Remote: 3000}, {Local: 5173, Remote: 5174}}
 
-	got := sshutil.BuildArgs(ports, target, "", nil)
+	got := sshutil.BuildArgs(ports, target, "", "", nil)
 	want := []string{
 		"-L", "3000:localhost:3000",
 		"-L", "5173:localhost:5174",

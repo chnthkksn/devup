@@ -34,12 +34,22 @@ func BuildIgnores(local string) ([]string, error) {
 		add(ig)
 	}
 
-	f, err := os.Open(filepath.Join(local, ".gitignore"))
+	for _, name := range []string{".gitignore", ".mutagenignore"} {
+		if err := readIgnoreFile(filepath.Join(local, name), add); err != nil {
+			return nil, err
+		}
+	}
+
+	return merged, nil
+}
+
+func readIgnoreFile(path string, add func(string)) error {
+	f, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return merged, nil
+			return nil
 		}
-		return nil, err
+		return err
 	}
 	defer f.Close()
 
@@ -55,15 +65,11 @@ func BuildIgnores(local string) ([]string, error) {
 		}
 		add(line)
 	}
-	if err := scanner.Err(); err != nil {
-		return nil, err
-	}
-
-	return merged, nil
+	return scanner.Err()
 }
 
-func CreateSession(name, local string, t parser.Target, ignores []string) error {
-	args := []string{"sync", "create", "--name", name}
+func CreateSession(name, local string, t parser.Target, ignores []string, syncMode string) error {
+	args := []string{"sync", "create", "--name", name, "--sync-mode=" + syncMode}
 	for _, ig := range ignores {
 		args = append(args, "--ignore="+ig)
 	}
