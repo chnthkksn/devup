@@ -1,5 +1,7 @@
 # devup
 
+![devup banner](banner.jpeg)
+
 Local-first remote development CLI for VPS workflows.
 
 `devup` creates an ephemeral Mutagen sync, opens SSH port forwards, optionally runs a remote command, and cleans everything up on exit/CTRL+C.
