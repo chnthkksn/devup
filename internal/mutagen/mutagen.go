@@ -2,6 +2,7 @@ package mutagen
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -73,6 +74,13 @@ func CreateSession(name, local string, t parser.Target, ignores []string) error 
 	return cmd.Run()
 }
 
-func TerminateSession(name string) {
-	_ = exec.Command("mutagen", "sync", "terminate", name).Run()
+func WaitForSync(ctx context.Context, name string) error {
+	cmd := exec.CommandContext(ctx, "mutagen", "sync", "flush", name)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func TerminateSession(name string) error {
+	return exec.Command("mutagen", "sync", "terminate", name).Run()
 }

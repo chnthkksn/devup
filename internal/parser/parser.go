@@ -28,13 +28,32 @@ func (m *MultiFlag) Set(v string) error {
 	return nil
 }
 
+// Flag name constants — used in both RegisterFlags and valueTakingFlags.
+const (
+	flagPort  = "p"
+	flagPortL = "port"
+	flagLocal = "l"
+	flagLocalL = "local"
+	flagCmd   = "cmd"
+)
+
+// valueTakingFlags is the set of flags that consume the next argument as their
+// value. Must stay consistent with RegisterFlags.
+var valueTakingFlags = map[string]struct{}{
+	"-" + flagPort:    {},
+	"--" + flagPortL:  {},
+	"-" + flagLocal:   {},
+	"--" + flagLocalL: {},
+	"--" + flagCmd:    {},
+}
+
 func RegisterFlags(fs *flag.FlagSet) (*string, *string, *MultiFlag) {
-	local := fs.String("l", "", "Local folder")
-	fs.StringVar(local, "local", "", "Local folder")
-	cmd := fs.String("cmd", "", "Remote startup command")
+	local := fs.String(flagLocal, "", "Local folder")
+	fs.StringVar(local, flagLocalL, "", "Local folder")
+	cmd := fs.String(flagCmd, "", "Remote startup command")
 	var ports MultiFlag
-	fs.Var(&ports, "p", "Port mapping")
-	fs.Var(&ports, "port", "Port mapping")
+	fs.Var(&ports, flagPort, "Port mapping")
+	fs.Var(&ports, flagPortL, "Port mapping")
 	return local, cmd, &ports
 }
 
@@ -45,7 +64,7 @@ func SplitArgs(args []string) ([]string, string, error) {
 		arg := args[i]
 		if strings.HasPrefix(arg, "-") {
 			parsed = append(parsed, arg)
-			takesValue := arg == "-p" || arg == "--port" || arg == "-l" || arg == "--local" || arg == "--cmd"
+			_, takesValue := valueTakingFlags[arg]
 			if takesValue && !strings.Contains(arg, "=") {
 				if i+1 >= len(args) {
 					return nil, "", fmt.Errorf("flag %q requires a value", arg)

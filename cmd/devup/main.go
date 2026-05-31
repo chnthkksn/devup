@@ -73,7 +73,7 @@ func run() int {
 	defer cancel()
 
 	logInfo("Ensuring remote directory exists")
-	if err := sshutil.EnsureRemoteDir(t); err != nil {
+	if err := sshutil.EnsureRemoteDir(ctx, t); err != nil {
 		logError("Remote directory setup failed: %v", err)
 		return 1
 	}
@@ -89,8 +89,16 @@ func run() int {
 	}
 	defer func() {
 		logInfo("Terminating Mutagen sync session")
-		mutagen.TerminateSession(sessionName)
+		if err := mutagen.TerminateSession(sessionName); err != nil {
+			logError("Mutagen session termination failed: %v", err)
+		}
 	}()
+
+	logInfo("Waiting for initial sync to complete")
+	if err := mutagen.WaitForSync(ctx, sessionName); err != nil {
+		logError("Initial sync failed: %v", err)
+		return 1
+	}
 
 	sshArgs := sshutil.BuildArgs(ports, t, *remoteCmd, logInfo)
 	cmd := exec.CommandContext(ctx, "ssh", sshArgs...)
