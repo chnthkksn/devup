@@ -6,13 +6,17 @@ Local-first remote development CLI for VPS workflows.
 
 ## Features
 
-- Ephemeral Mutagen sync session
+- Ephemeral Mutagen sync session with configurable sync mode (default: `one-way-safe`)
+- Waits for initial sync to complete before opening the SSH shell
 - Repeatable `-p/--port` mappings (`3000` or `3000:3001`)
+- Optional SSH identity file via `-i/--identity`
 - Optional local path override via `-l/--local`
 - Optional remote command via `--cmd`
+- Auto-reconnect on disconnect via `--reconnect`
 - Remote target directory auto-create (`mkdir -p`)
 - Interactive shell starts in the target remote directory
 - Automatic cleanup of Mutagen session on exit or interruption
+- Reads `.gitignore` and `.mutagenignore` for sync exclusions
 - Startup dependency checks for `ssh` and `mutagen`
 
 ## Requirements
@@ -87,27 +91,39 @@ devup [user@]host:/remote/path [flags]
 
 Flags:
 
-- `-p, --port` Port mapping (repeatable)
-- `-l, --local` Local folder override (default: current directory)
-- `--cmd` Remote startup command
+- `-p, --port <mapping>`     Port forward (repeatable)
+- `-l, --local <path>`       Local folder to sync (default: current directory)
+- `-i, --identity <file>`    SSH identity file (private key)
+- `--cmd <command>`          Command to run on remote after connect
+- `--sync-mode <mode>`       Mutagen sync mode (default: `one-way-safe`)
+- `--reconnect`              Auto-reconnect SSH on disconnect
+- `--version`                Print version and exit
+
+Sync modes: `two-way-safe`, `two-way-resolved`, `one-way-safe`, `one-way-replica`
 
 Examples:
 
 ```bash
 # Same local/remote port
-./devup ubuntu@host:/apps/api -p 3000
+devup ubuntu@host:/apps/api -p 3000
 
 # Different local:remote port
-./devup ubuntu@host:/apps/api -p 3000:3001
+devup ubuntu@host:/apps/api -p 3000:3001
 
 # Multiple ports
-./devup ubuntu@host:/apps/api -p 3000 -p 5173:5173 -p 27017
+devup ubuntu@host:/apps/api -p 3000 -p 5173:5173 -p 27017
 
 # Local path override
-./devup ubuntu@host:/apps/api -l ~/projects/api -p 3000
+devup ubuntu@host:/apps/api -l ~/projects/api -p 3000
 
-# Run remote command in remote path
-./devup ubuntu@host:/apps/api -p 3000 --cmd "docker compose up"
+# Custom SSH identity file
+devup ubuntu@host:/apps/api -i ~/.ssh/my_key
+
+# Run remote command and auto-reconnect on crash
+devup ubuntu@host:/apps/api -p 3000 --cmd "npm run dev" --reconnect
+
+# Two-way sync (changes on remote sync back to local)
+devup ubuntu@host:/apps/api --sync-mode two-way-safe
 ```
 
 ## Development
